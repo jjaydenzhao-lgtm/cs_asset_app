@@ -24,6 +24,13 @@ android.minapi = 21
 android.ndk = 25b
 android.archs = arm64-v8a,armeabi-v7a
 
+# 接受 SDK 许可（CI 环境必须）
+android.accept_sdk_license = True
+android.skip_update = False
+
+# 指定 build-tools 版本（匹配 API 33）
+android.build_tools_version = 33.0.2
+
 # 图标（可选，没有就用默认）
 # icon.filename = %(source.dir)s/assets/icon.png
 
