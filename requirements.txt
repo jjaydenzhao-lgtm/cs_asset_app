@@ -1,0 +1,2 @@
+requests
+kivy==2.3.0

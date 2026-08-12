@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+*.egg
+
+# Virtualenv
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# SQLite database
+*.db
+
+# Cache
+cache/
+
+# Buildozer / Android
+.buildozer/
+bin/
+*.apk
+
+# OS
+.DS_Store
+Thumbs.db

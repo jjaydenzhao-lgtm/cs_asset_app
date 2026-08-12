@@ -1,0 +1,50 @@
+name: Build APK
+
+# 云端自动打包安卓 APK（免费，无需本地环境）
+# 使用方法：
+#   1. 把整个项目推到你的 GitHub 仓库（保持根目录有 buildozer.spec）
+#   2. 打开仓库 Actions 页面，手动触发本 workflow（Workflow dispatch）
+#   3. 等待几分钟后，在 Artifacts 里下载 assetbook-*.apk
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install system deps
+        run: |
+          sudo apt update
+          sudo apt install -y git zip unzip openjdk-17-jdk autoconf libtool \
+            pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 \
+            cmake libffi-dev libssl-dev
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Buildozer
+        run: |
+          pip install --upgrade pip
+          pip install buildozer cython==0.29.36
+
+      - name: Build APK (debug)
+        working-directory: cs_asset_app
+        run: |
+          buildozer -v android debug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: assetbook-apk
+          path: cs_asset_app/bin/*.apk
