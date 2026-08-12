@@ -25,7 +25,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y git zip unzip openjdk-17-jdk autoconf libtool \
-            pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 \
+            pkg-config zlib1g-dev libncurses-dev libncursesw5-dev libtinfo6 \
             cmake libffi-dev libssl-dev
 
       - name: Install Python
@@ -39,7 +39,6 @@ jobs:
           pip install buildozer cython==0.29.36
 
       - name: Build APK (debug)
-        working-directory: cs_asset_app
         run: |
           buildozer -v android debug
 
@@ -47,4 +46,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: assetbook-apk
-          path: cs_asset_app/bin/*.apk
+          path: bin/*.apk
