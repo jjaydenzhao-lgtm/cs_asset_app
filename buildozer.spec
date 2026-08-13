@@ -23,7 +23,8 @@ requirements = python3==3.11.9,hostpython3==3.11.9,kivy==2.3.0,requests==2.31.0
 android.permissions = INTERNET,ACCESS_NETWORK_STATE
 android.api = 33
 android.minapi = 21
-android.ndk = 25b
+# develop 分支推荐 NDK 28c（libthorvg 需要 r26+ 才有的 libomp.so，25b 会报 IndexError）
+android.ndk = 28c
 android.archs = arm64-v8a,armeabi-v7a
 
 # 接受 SDK 许可（CI 环境必须）
