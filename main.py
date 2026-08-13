@@ -43,6 +43,13 @@ RED = (0.86, 0.26, 0.26, 1)        # 亏损/支出红
 GREEN = (0.16, 0.67, 0.36, 1)      # 盈利/收入绿
 BG = (0.96, 0.97, 0.99, 1)         # 页面底色
 
+# 记账类别（来自「个人收支规划表」日常记账说明）
+EXPENSE_CATEGORIES = ["住房", "通讯", "交通", "饮食", "衣物", "医疗",
+                      "娱乐", "学习", "健身", "其他"]
+INCOME_CATEGORIES = ["工资", "补贴", "津贴", "兼职", "红包", "其他"]
+# 支付方式
+PAY_METHODS = ["现金", "微信", "支付宝", "银行卡", "其他"]
+
 
 def money(v):
     """格式化金额，带千分位"""
@@ -106,12 +113,18 @@ class DashboardScreen(Screen):
                      background_color=ACCENT)
         btn.bind(on_press=lambda x: self.save_snapshot())
         box.add_widget(btn)
+
+        salary_btn = Button(text="💰 工资计算", size_hint_y=None, height=dp(46),
+                            background_color=(0.4, 0.35, 0.7, 1))
+        salary_btn.bind(on_press=lambda x: self.open_salary())
+        box.add_widget(salary_btn)
+
         self.add_widget(box)
         Clock.schedule_once(lambda dt: self.refresh())
 
-    def card(self, title, value, color):
-        return BoxLayout(orientation="vertical", size_hint_y=None, height=dp(74),
-                         padding=dp(10), canvas_color=None) or None
+    def open_salary(self):
+        """打开工资计算器弹窗"""
+        open_salary_calculator()
 
     def refresh(self, *args):
         """刷新所有资产汇总"""
@@ -204,7 +217,8 @@ class LedgerScreen(Screen):
             tag_color = GREEN if r["type"] == "income" else RED
             line.add_widget(Label(text=f"{r['date'][5:]}", size_hint_x=0.22,
                                   color=(0.4, 0.4, 0.45, 1)))
-            line.add_widget(Label(text=f"[{tag}] {r['category']}", size_hint_x=0.34,
+            pay = f" ·{r['payment']}" if r["payment"] else ""
+            line.add_widget(Label(text=f"[{tag}] {r['category']}{pay}", size_hint_x=0.34,
                                   color=(0.25, 0.25, 0.3, 1)))
             line.add_widget(Label(text=f"{'＋' if r['type']=='income' else '－'}{money(r['amount'])}",
                                   size_hint_x=0.3, color=tag_color, bold=True))
@@ -225,15 +239,26 @@ class LedgerScreen(Screen):
         type_sp = Spinner(text="支出", values=["支出", "收入"], size_hint_y=None, height=dp(40))
         box.add_widget(type_sp)
         box.add_widget(field_label("分类"))
-        cat_in = TextInput(text="餐饮", size_hint_y=None, height=dp(40))
-        box.add_widget(cat_in)
+        cat_sp = Spinner(text="住房", values=EXPENSE_CATEGORIES,
+                         size_hint_y=None, height=dp(40))
+        box.add_widget(cat_sp)
         box.add_widget(field_label("金额（元）"))
         amt_in = TextInput(input_filter="float", size_hint_y=None, height=dp(40))
         box.add_widget(amt_in)
+        box.add_widget(field_label("支付方式"))
+        pay_sp = Spinner(text="微信", values=PAY_METHODS, size_hint_y=None, height=dp(40))
+        box.add_widget(pay_sp)
         box.add_widget(field_label("备注"))
         note_in = TextInput(size_hint_y=None, height=dp(40))
         box.add_widget(note_in)
-        popup = Popup(title="记一笔", content=box, size_hint=(0.85, 0.75))
+        popup = Popup(title="记一笔", content=box, size_hint=(0.85, 0.9))
+
+        # 切换类型时联动分类
+        def on_type(sp, text):
+            cats = INCOME_CATEGORIES if text == "收入" else EXPENSE_CATEGORIES
+            cat_sp.values = cats
+            cat_sp.text = cats[0]
+        type_sp.bind(text=on_type)
 
         def submit(btn):
             try:
@@ -242,8 +267,8 @@ class LedgerScreen(Screen):
                 return
             ttype = "income" if type_sp.text == "收入" else "expense"
             today = __import__("datetime").date.today().strftime("%Y-%m-%d")
-            db.add_transaction(today, ttype, cat_in.text.strip() or "其他",
-                               amt, note_in.text.strip())
+            db.add_transaction(today, ttype, cat_sp.text.strip() or "其他",
+                               amt, pay_sp.text, note_in.text.strip())
             popup.dismiss()
             self.refresh()
         box.add_widget(Button(text="保存", background_color=ACCENT, size_hint_y=None,
@@ -562,6 +587,135 @@ class CashScreen(Screen):
 
 
 # ============================================================
+# 工资计算器弹窗（参数来自「个人收支规划表」基础参数）
+# ============================================================
+def open_salary_calculator():
+    box = BoxLayout(orientation="vertical", spacing=dp(6), padding=dp(10))
+    box.add_widget(field_label("月基本工资（元）"))
+    base_in = TextInput(text=str(db.SALARY_DEFAULTS["base"]), input_filter="float",
+                        size_hint_y=None, height=dp(40))
+    box.add_widget(base_in)
+    box.add_widget(field_label("学历补贴（元/月）"))
+    edu_in = TextInput(text=str(db.SALARY_DEFAULTS["edu"]), input_filter="float",
+                       size_hint_y=None, height=dp(40))
+    box.add_widget(edu_in)
+    box.add_widget(field_label("从教津贴（元/月，满1年后600）"))
+    teach_in = TextInput(text=str(db.SALARY_DEFAULTS["teach"]), input_filter="float",
+                         size_hint_y=None, height=dp(40))
+    box.add_widget(teach_in)
+
+    result_label = Label(text="", size_hint_y=None, height=dp(170),
+                         color=(0.2, 0.2, 0.25, 1), halign="left", valign="top")
+    result_label.bind(size=result_label.setter("text_size"))
+    box.add_widget(result_label)
+    popup = Popup(title="工资计算", content=box, size_hint=(0.88, 0.92))
+
+    def calc(btn):
+        try:
+            base = float(base_in.text or 0)
+            edu = float(edu_in.text or 0)
+            teach = float(teach_in.text or 0)
+        except ValueError:
+            return
+        s = db.calc_salary(base, edu, teach)
+        result_label.text = (
+            f"税前总收入：{money(s['gross'])}\n"
+            f"养老 {money(s['pension'])}   医疗 {money(s['medical'])}   失业 {money(s['unemployment'])}\n"
+            f"公积金（个人）{money(s['fund_personal'])}   （单位入账）{money(s['fund_company'])}\n"
+            f"五险一金个人合计：{money(s['social_total'])}\n"
+            f"个人所得税（3%简化）：{money(s['tax'])}\n"
+            f"每月到手现金：{money(s['net'])}"
+        )
+
+    box.add_widget(Button(text="计算", background_color=ACCENT, size_hint_y=None,
+                          height=dp(44), on_press=calc))
+    popup.open()
+
+
+# ============================================================
+# 预算页面（月度支出预算，来源「个人收支规划表」）
+# ============================================================
+class BudgetScreen(Screen):
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self.name = "budget"
+        self.month_selector = None
+        box = BoxLayout(orientation="vertical", padding=dp(10), spacing=dp(6))
+        top = BoxLayout(size_hint_y=None, height=dp(46), spacing=dp(8))
+        top.add_widget(Label(text="月度预算", bold=True, font_size=dp(18),
+                             color=(0.2, 0.2, 0.25, 1)))
+        edit_btn = Button(text="＋ 设置预算", background_color=ACCENT)
+        edit_btn.bind(on_press=lambda x: self.open_edit_form())
+        self.month_selector = Spinner(text="本月", values=["本月", "全部"],
+                                      size_hint_x=0.4)
+        self.month_selector.bind(text=lambda *a: self.refresh())
+        top.add_widget(edit_btn)
+        top.add_widget(self.month_selector)
+        box.add_widget(top)
+
+        self.summary = Label(text="", size_hint_y=None, height=dp(30),
+                             color=(0.3, 0.3, 0.35, 1))
+        box.add_widget(self.summary)
+        self.body = BoxLayout(orientation="vertical", size_hint_y=None)
+        box.add_widget(make_scroll(self.body))
+        self.add_widget(box)
+        Clock.schedule_once(lambda dt: self.refresh())
+
+    def refresh(self, *args):
+        self.body.clear_widgets()
+        month = None if self.month_selector.text == "全部" else \
+            __import__("datetime").date.today().strftime("%Y-%m")
+        budgets = db.get_budgets()
+        spending = db.get_category_spending(month)
+        total_budget = sum(budgets.values())
+        total_spent = sum(spending.values())
+        remain = total_budget - total_spent
+        self.summary.text = (f"本月已花 {money(total_spent)} / 预算 {money(total_budget)}"
+                             f"   剩余 {money(remain)}")
+        for cat in EXPENSE_CATEGORIES:
+            budget = budgets.get(cat, 0)
+            spent = spending.get(cat, 0)
+            remain_c = budget - spent
+            pct = (spent / budget) if budget > 0 else 0
+            bar_len = int(min(pct, 1.0) * 20)
+            bar = "█" * bar_len + "░" * (20 - bar_len)
+            color = RED if (budget > 0 and spent > budget) else (0.3, 0.3, 0.35, 1)
+            line = BoxLayout(orientation="vertical", size_hint_y=None,
+                             height=dp(50), spacing=dp(2))
+            line.add_widget(Label(
+                text=f"{cat}  已花 {money(spent)} / {money(budget)}  （剩 {money(remain_c)}）",
+                size_hint_y=None, height=dp(24), color=(0.25, 0.25, 0.3, 1),
+                halign="left"))
+            line.add_widget(Label(text=f"{bar} {pct * 100:.0f}%",
+                                  size_hint_y=None, height=dp(22), color=color,
+                                  halign="left"))
+            self.body.add_widget(line)
+
+    def open_edit_form(self):
+        box = BoxLayout(orientation="vertical", spacing=dp(6), padding=dp(10))
+        box.add_widget(field_label("类别"))
+        cat_sp = Spinner(text="住房", values=EXPENSE_CATEGORIES,
+                         size_hint_y=None, height=dp(40))
+        box.add_widget(cat_sp)
+        box.add_widget(field_label("月预算（元）"))
+        amt_in = TextInput(input_filter="float", size_hint_y=None, height=dp(40))
+        box.add_widget(amt_in)
+        popup = Popup(title="设置预算", content=box, size_hint=(0.85, 0.5))
+
+        def submit(btn):
+            try:
+                amt = float(amt_in.text)
+            except ValueError:
+                return
+            db.set_budget(cat_sp.text, amt)
+            popup.dismiss()
+            self.refresh()
+        box.add_widget(Button(text="保存", background_color=ACCENT, size_hint_y=None,
+                              height=dp(44), on_press=submit))
+        popup.open()
+
+
+# ============================================================
 # 主程序：底部导航 + 页面切换
 # ============================================================
 class AssetApp(App):
@@ -572,6 +726,7 @@ class AssetApp(App):
         sm = ScreenManager()
         sm.add_widget(DashboardScreen())
         sm.add_widget(LedgerScreen())
+        sm.add_widget(BudgetScreen())
         sm.add_widget(CashScreen())
         sm.add_widget(StocksScreen())
         sm.add_widget(CS2Screen())
@@ -582,6 +737,7 @@ class AssetApp(App):
         items = [
             ("🏠", "仪表盘", "dashboard"),
             ("📒", "记账", "ledger"),
+            ("🎯", "预算", "budget"),
             ("💰", "现金", "cash"),
             ("📈", "股票", "stocks"),
             ("🎮", "饰品", "cs2"),

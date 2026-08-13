@@ -267,4 +267,4 @@ if __name__ == "__main__":
     table = get_price_table()
     print("CS2 价格表条目数:", len(table))
     print("AK-47 | Redline (Field-Tested):", match_cs2_price("AK-47 | Redline", "FT", False, table))
-    print("CS2 价格表条目数:", len(t))
+    print("CS2 价格表条目数:", len(table))
