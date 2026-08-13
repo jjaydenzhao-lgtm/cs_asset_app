@@ -15,9 +15,9 @@ source.include_patterns = assets/*,cache/*.json
 version = 0.1.0
 
 # 依赖库（Kivy + 网络请求；sqlite3 是 Python 内置，p4a 自动带）
-# 锁定 python 3.11.9：新版 p4a 默认 hostpython3/python3 = 3.14.2，其 venv 的 pip 有缺陷
-# （pip install -U pip 报 BuildDependencyInstallError），故统一锁回稳定的 3.11.9
-requirements = python3==3.11.9,hostpython3==3.11.9,kivy==2.3.0,requests==2.31.0
+# 不锁版本，让 develop 分支用其默认组合（python3 3.14.x + 新 kivy + NDK 28c），
+# 这是 p4a 维护者测试过的组合；锁旧版 3.11.9/kivy2.3.0 反而与 NDK 28c 不兼容
+requirements = python3,kivy,requests
 
 # Android 权限：需要联网拉行情
 android.permissions = INTERNET,ACCESS_NETWORK_STATE
