@@ -15,7 +15,8 @@ source.include_patterns = assets/*,cache/*.json
 version = 0.1.0
 
 # 依赖库（Kivy + 网络请求；sqlite3 是 Python 内置，p4a 自动带）
-requirements = python3,kivy,requests
+# 锁定 python 3.11：新版 p4a 默认 3.14 的 venv 有 pip 缺陷会导致打包失败
+requirements = python3==3.11.9,kivy==2.3.0,requests==2.31.0
 
 # Android 权限：需要联网拉行情
 android.permissions = INTERNET,ACCESS_NETWORK_STATE
