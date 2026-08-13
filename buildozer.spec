@@ -33,13 +33,14 @@ android.skip_update = False
 # 指定 build-tools 版本（匹配 API 33）
 android.build_tools_version = 33.0.2
 
+# 用 develop 分支的 python-for-android：master 分支的 `pip install -U pip`
+# 会升级到 pip 25.x 导致打包失败（ImportError: open_rich_spinner / BuildDependencyInstallError）
+# 注意：必须在 [app] 段（buildozer 从 app 段读取 p4a.branch）
+p4a.branch = develop
+
 # 图标（可选，没有就用默认）
 # icon.filename = %(source.dir)s/assets/icon.png
 
 [buildozer]
 log_level = 2
 warn_on_root = 1
-
-# 用 develop 分支的 python-for-android：master 分支的 `pip install -U pip`
-# 会升级到 pip 25.x 导致打包失败（ImportError: open_rich_spinner / BuildDependencyInstallError）
-p4a.branch = develop
