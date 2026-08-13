@@ -17,7 +17,7 @@ version = 0.1.0
 # 依赖库（Kivy + 网络请求；sqlite3 是 Python 内置，p4a 自动带）
 # 不锁版本，让 develop 分支用其默认组合（python3 3.14.x + 新 kivy + NDK 28c），
 # 这是 p4a 维护者测试过的组合；锁旧版 3.11.9/kivy2.3.0 反而与 NDK 28c 不兼容
-requirements = python3,kivy,requests
+requirements = python3,kivy,kivymd,requests,pillow
 
 # Android 权限：需要联网拉行情
 android.permissions = INTERNET,ACCESS_NETWORK_STATE
