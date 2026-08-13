@@ -39,3 +39,7 @@ android.build_tools_version = 33.0.2
 [buildozer]
 log_level = 2
 warn_on_root = 1
+
+# 用 develop 分支的 python-for-android：master 分支的 `pip install -U pip`
+# 会升级到 pip 25.x 导致打包失败（ImportError: open_rich_spinner / BuildDependencyInstallError）
+p4a.branch = develop
